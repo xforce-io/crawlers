@@ -344,6 +344,7 @@ class MultiSiteCrawler:
             # 写入文件
             try:
                 with open(file_path, 'w', encoding='utf-8') as f:
+                    self.logger.info(f"写入文件: {file_path}")
                     f.write(article.to_text())
             except Exception as e:
                 self.logger.error(f"写入文件失败: {file_path}, 错误: {str(e)}")

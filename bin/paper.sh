@@ -1,3 +1,3 @@
-#! /bin/bash
-
-python -m crawler.paper.main
+#!/bin/bash
+cd $(dirname $0)/..
+python3 -m crawler.paper.main

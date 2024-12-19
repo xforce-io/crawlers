@@ -1,46 +1,51 @@
 import asyncio
 import logging
-import os
-from crawler.paper.paper_crawler import PaperCrawler
+from crawler.paper.config.settings import ENABLED_SITES
 from crawler.paper.config.sites import SITES
-from crawler.paper.config.settings import LOGGING, ENABLED_SITES, LOG_DIR
-import logging.config
+from crawler.paper.paper_crawler import PaperCrawler, PaperCrawlerConfig
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(name)s:%(lineno)d: %(message)s'
+)
+
+logger = logging.getLogger(__name__)
 
 async def main():
     """主函数"""
-    try:
-        # 创建日志目录
-        os.makedirs(LOG_DIR, exist_ok=True)
+    logger.info("开始爬取论文...")
+    
+    # 创建配置
+    config = PaperCrawlerConfig()
+    
+    # 从 SITES 配置中读取启用状态
+    enabled_sites = []
+    for site_name, site_config in SITES.items():
+        if site_name not in ENABLED_SITES:
+            continue
         
-        # 配置日志
-        logging.config.dictConfig(LOGGING)
-        logger = logging.getLogger(__name__)
+        config.enabled_sources[site_name] = site_config['enabled']
+        if site_config['enabled']:
+            enabled_sites.append(site_name)
+            # 更新源配置
+            config.source_configs[site_name].update({
+                'start_url': site_config['start_url'],
+                'max_pages': site_config['max_pages'],
+                'page_size': site_config['page_size']
+            })
+    
+    if not enabled_sites:
+        logger.warning("没有启用任何站点")
+        return
         
-        logger.info("开始爬取论文...")
-        
-        # 为启用的站点创建爬虫实例并运行
-        tasks = []
-        for site_name in ENABLED_SITES:
-            if site_name in SITES:
-                logger.info(f"开始爬取 {site_name}")
-                crawler = PaperCrawler(SITES[site_name])
-                task = asyncio.create_task(crawler.crawl())
-                tasks.append(task)
-            else:
-                logger.warning(f"未知的站点配置: {site_name}")
-        
-        if not tasks:
-            logger.warning("没有启用任何站点")
-            return
-            
-        # 等待所有爬虫完成
-        await asyncio.gather(*tasks)
-        
-        logger.info("爬取完成")
-        
-    except Exception as e:
-        logger.error(f"程序运行出错: {str(e)}", exc_info=True)
-        raise
+    logger.info(f"已启用的站点: {', '.join(enabled_sites)}")
+    
+    # 创建爬虫并开始爬取
+    crawler = PaperCrawler(config)
+    await crawler.crawl()
+    
+    # 输出结果统计
+    logger.info(f"爬取完成，共获取 {len(crawler.papers)} 篇论文")
 
 if __name__ == "__main__":
     asyncio.run(main()) 

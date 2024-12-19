@@ -3,7 +3,7 @@
 """
 
 # 基础设置
-from crawler.config.settings import REQUEST_TIMEOUT, RETRY_INTERVAL, RETRY_TIMES
+from crawler.config import settings
 
 BASE_DIR = 'data/paper'
 LOG_DIR = f'log/'
@@ -61,16 +61,18 @@ LOGGING = {
 
 # 爬取限制
 CRAWL_LIMITS = {
-    'max_pages_per_source': 100,  # 确保这个限制被正确设置
-    'min_date': None,  # 最早爬取日期，None表示不限制
-    'max_date': None   # 最晚爬取日期，None表示不限制
+    'max_pages_per_source': 150,  # 每个来源最多抓取的页数
 }
 
 # 存储设置
 STORAGE_CONFIG = {
-    'base_dir': 'data/paper',  # 基础存储目录
-    'date_format': '%Y-%m-%d'  # 日期目录格式
+    'base_dir': 'data/papers',  # 论文存储基础目录
 }
 
 # 在settings.py中添加启用的站点配置
-ENABLED_SITES = ['huggingface', "paperswithcode"]  # 默认只启用paperswithcode 
+ENABLED_SITES = ['arxiv']  # 默认只启用paperswithcode 
+
+# 下载器配置继承自全局配置
+DOWNLOADER_CONFIG = {
+    **settings.DOWNLOADER_CONFIG,
+}
